@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="uk" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вплив елементів-токсикантів на здоров'я людини — Інтерактивний Симулятор</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js for interactivity -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 h-full flex flex-col selection:bg-emerald-500 selection:text-white text-base md:text-lg" x-data="appState()">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 px-4 lg:px-8 py-3.5 flex items-center justify-between shadow-sm">
+        <div class="flex items-center space-x-3 cursor-pointer" @click="activeTab = 'home'">
+            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-600/20">
+                <i data-lucide="shield-alert" class="w-6 h-6 text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-lg md:text-xl text-slate-900 leading-tight">ЕкоТоксик Симулятор</h1>
+                <p class="text-xs md:text-sm text-slate-600">Вплив елементів-токсикантів на здоров'я</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs (Desktop) -->
+        <nav class="hidden xl:flex items-center space-x-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+            <template x-for="tab in tabs" :key="tab.id">
+                <button @click="activeTab = tab.id" 
+                    class="px-4 py-2.5 rounded-lg text-sm md:text-base font-semibold transition-all duration-200 flex items-center space-x-2"
+                    :class="activeTab === tab.id ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'">
+                    <i :data-lucide="tab.icon" class="w-5 h-5"></i>
+                    <span x-text="tab.name"></span>
+                </button>
+            </template>
+        </nav>
+
+        <!-- Quick Stats / User Badge -->
+        <div class="flex items-center space-x-3">
+            <div class="hidden sm:flex items-center space-x-2 bg-slate-100 border border-slate-200 px-3.5 py-2 rounded-xl">
+                <i data-lucide="award" class="w-5 h-5 text-amber-500"></i>
+                <span class="text-sm font-semibold text-slate-700">Бали: <strong class="text-emerald-600 font-bold text-base" x-text="score"></strong></span>
+            </div>
+            <button @click="mobileMenuOpen = !mobileMenuOpen" class="xl:hidden p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:text-slate-900 hover:bg-slate-200">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation Drawer -->
+    <div x-show="mobileMenuOpen" x-cloak class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex flex-col p-6 xl:hidden">
+        <div class="bg-white rounded-3xl p-6 shadow-2xl space-y-4 max-w-sm w-full mx-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center">
+                        <i data-lucide="shield-alert" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <span class="font-bold text-lg text-slate-900">Меню симулятора</span>
+                </div>
+                <button @click="mobileMenuOpen = false" class="p-2 rounded-xl bg-slate-100 text-slate-600 hover:text-slate-900">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="flex flex-col space-y-2">
+                <template x-for="tab in tabs" :key="tab.id">
+                    <button @click="activeTab = tab.id; mobileMenuOpen = false" 
+                        class="w-full px-4 py-3.5 rounded-xl text-left font-semibold text-base flex items-center space-x-3 transition-colors"
+                        :class="activeTab === tab.id ? 'bg-emerald-600 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'">
+                        <i :data-lucide="tab.icon" class="w-5 h-5"></i>
+                        <span x-text="tab.name"></span>
+                    </button>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8 max-w-7xl mx-auto w-full">
+
+        <!-- HOME / DASHBOARD TAB -->
+        <div x-show="activeTab === 'home'" x-cloak class="space-y-8 animate-fade-in">
+            <!-- Hero Banner -->
+            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-700 via-teal-700 to-slate-800 text-white p-6 lg:p-12 shadow-2xl">
+                <div class="absolute -right-10 -bottom-10 w-96 h-96 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="relative z-10 max-w-3xl space-y-5">
+                    <div class="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-md px-3.5 py-1.5 rounded-full text-white text-xs md:text-sm font-bold tracking-wide uppercase">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        <span>Інтерактивний навчальний комплекс</span>
+                    </div>
+                    <h2 class="text-3xl lg:text-5xl font-extrabold tracking-tight leading-tight">
+                        Вплив елементів-токсикантів на здоров'я людини
+                    </h2>
+                    <p class="text-slate-100 text-base lg:text-lg leading-relaxed">
+                        Досліджуйте невидимі небезпеки довкілля, вивчайте накопичення важких металів в організмі людини, наслідки військових дій для екосистем та перевіряйте побутові ризики у віртуальній лабораторії!
+                    </p>
+                    <div class="pt-2 flex flex-wrap gap-4">
+                        <button @click="activeTab = 'body'" class="px-6 py-3.5 bg-white text-emerald-800 font-bold text-base rounded-xl shadow-lg hover:bg-emerald-50 flex items-center space-x-2 transition-all">
+                            <i data-lucide="activity" class="w-5 h-5 text-emerald-600"></i>
+                            <span>Симулятор тіла та органів</span>
+                        </button>
+                        <button @click="activeTab = 'kitchen'" class="px-6 py-3.5 bg-emerald-900/40 border border-white/30 text-white font-bold text-base rounded-xl hover:bg-emerald-900/60 flex items-center space-x-2 transition-all">
+                            <i data-lucide="home" class="w-5 h-5"></i>
+                            <span>Еко-детектив у побуті</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modules Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div @click="activeTab = 'body'" class="group bg-white border border-slate-200 hover:border-emerald-500 rounded-3xl p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10 flex flex-col justify-between">
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                            <i data-lucide="activity" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-bold text-xl text-slate-900 mb-2">Симулятор тіла та органів</h3>
+                        <p class="text-sm md:text-base text-slate-600 leading-relaxed">
+                            Інтерактивна карта органів: дізнайтеся, як свинець, ртуть, кадмій та інші елементи вражають мозок, нирки, печінку та кістки.
+                        </p>
+                    </div>
+                    <div class="mt-6 flex items-center text-sm font-bold text-emerald-600 group-hover:translate-x-1 transition-transform">
+                        <span>Відкрити модуль</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 ml-1.5"></i>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div @click="activeTab = 'kitchen'" class="group bg-white border border-slate-200 hover:border-teal-500 rounded-3xl p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/10 flex flex-col justify-between">
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                            <i data-lucide="home" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-bold text-xl text-slate-900 mb-2">Еко-детектив у побуті</h3>
+                        <p class="text-sm md:text-base text-slate-600 leading-relaxed">
+                            Знайдіть небезпечні предмети на віртуальній кухні: пошкоджені емальовані каструлі, відкриті бляшанки, старі труби та знайдіть захист.
+                        </p>
+                    </div>
+                    <div class="mt-6 flex items-center text-sm font-bold text-teal-600 group-hover:translate-x-1 transition-transform">
+                        <span>Почати розслідування</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 ml-1.5"></i>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div @click="activeTab = 'war'" class="group bg-white border border-slate-200 hover:border-cyan-500 rounded-3xl p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/10 flex flex-col justify-between">
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-cyan-100 text-cyan-700 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                            <i data-lucide="globe" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-bold text-xl text-slate-900 mb-2">Вплив війни на екологію</h3>
+                        <p class="text-sm md:text-base text-slate-600 leading-relaxed">
+                            Аналіз наслідків бойових дій для ґрунтів і води, міграція токсикантів та сучасні методи відновлення (фіторемедіація).
+                        </p>
+                    </div>
+                    <div class="mt-6 flex items-center text-sm font-bold text-cyan-600 group-hover:translate-x-1 transition-transform">
+                        <span>Дослідити екосистему</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 ml-1.5"></i>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div @click="activeTab = 'encyclopedia'" class="group bg-white border border-slate-200 hover:border-indigo-500 rounded-3xl p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 flex flex-col justify-between">
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                            <i data-lucide="book-open" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-bold text-xl text-slate-900 mb-2">Довідник токсикантів</h3>
+                        <p class="text-sm md:text-base text-slate-600 leading-relaxed">
+                            Інтерактивна таблиця з детальною інформацією про біологічну роль, джерела забруднення, ГДК та методи запобігання.
+                        </p>
+                    </div>
+                    <div class="mt-6 flex items-center text-sm font-bold text-indigo-600 group-hover:translate-x-1 transition-transform">
+                        <span>Відкрити довідник</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 ml-1.5"></i>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div @click="activeTab = 'quiz'" class="group bg-white border border-slate-200 hover:border-amber-500 rounded-3xl p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/10 flex flex-col justify-between">
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                            <i data-lucide="award" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-bold text-xl text-slate-900 mb-2">Тест та Сертифікат</h3>
+                        <p class="text-sm md:text-base text-slate-600 leading-relaxed">
+                            Перевірте свої знання за всіма розділами та отримайте персональний іменний сертифікат Еко-інспектора!
+                        </p>
+                    </div>
+                    <div class="mt-6 flex items-center text-sm font-bold text-amber-600 group-hover:translate-x-1 transition-transform">
+                        <span>Скласти тест</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 ml-1.5"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODULE 1: BODY ORGANS SIMULATOR -->
+        <div x-show="activeTab === 'body'" x-cloak class="space-y-6 animate-fade-in">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 flex items-center space-x-3">
+                        <i data-lucide="activity" class="w-8 h-8 text-emerald-600"></i>
+                        <span>Симулятор тіла та ураження органів</span>
+                    </h2>
+                    <p class="text-sm md:text-base text-slate-600 mt-1">Оберіть орган або систему людини, щоб побачити, які елементи-токсиканти там накопичуються і які хвороби вони викликають.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Organs Selection List -->
+                <div class="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-sm">
+                    <h3 class="font-bold text-lg text-slate-900 flex items-center space-x-2">
+                        <i data-lucide="layers" class="w-5 h-5 text-emerald-600"></i>
+                        <span>Анатомічні системи</span>
+                    </h3>
+                    <div class="space-y-3">
+                        <template x-for="org in bodyOrgans" :key="org.id">
+                            <button @click="selectedOrgan = org" 
+                                class="w-full text-left p-4 rounded-2xl border font-semibold text-base transition-all flex items-center justify-between"
+                                :class="selectedOrgan?.id === org.id ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'">
+                                <div class="flex items-center space-x-3">
+                                    <i :data-lucide="org.icon" class="w-6 h-6" :class="selectedOrgan?.id === org.id ? 'text-white' : 'text-emerald-600'"></i>
+                                    <span x-text="org.name"></span>
+                                </div>
+                                <i data-lucide="chevron-right" class="w-5 h-5" :class="selectedOrgan?.id === org.id ? 'text-white' : 'text-slate-400'"></i>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Organ Details Panel -->
+                <div class="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 lg:p-8 space-y-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between pb-5 border-b border-slate-200">
+                            <h3 class="text-2xl font-extrabold text-slate-900 flex items-center space-x-3">
+                                <i :data-lucide="selectedOrgan ? selectedOrgan.icon : 'info'" class="w-7 h-7 text-emerald-600"></i>
+                                <span x-text="selectedOrgan ? selectedOrgan.name : 'Оберіть орган зліва'"></span>
+                            </h3>
+                            <span class="text-xs md:text-sm px-3.5 py-1.5 rounded-full font-bold bg-emerald-100 text-emerald-800" x-text="selectedOrgan ? 'Уражена система' : ''"></span>
+                        </div>
+
+                        <div x-show="selectedOrgan" class="mt-6 space-y-6 animate-fade-in">
+                            <div class="bg-red-50 border border-red-200 rounded-2xl p-5 space-y-2">
+                                <h4 class="text-sm font-bold text-red-900 uppercase tracking-wider flex items-center space-x-2">
+                                    <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600"></i>
+                                    <span>Токсичні елементи, що накопичуються:</span>
+                                </h4>
+                                <div class="flex flex-wrap gap-2 pt-1">
+                                    <template x-for="el in selectedOrgan.elements" :key="el">
+                                        <span class="px-3 py-1 rounded-xl bg-red-600 text-white font-bold text-sm shadow-sm" x-text="el"></span>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-2">
+                                <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Характер ураження та хвороби:</h4>
+                                <p class="text-base text-slate-700 leading-relaxed" x-text="selectedOrgan.pathology"></p>
+                            </div>
+
+                            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 space-y-2">
+                                <h4 class="text-sm font-bold text-emerald-900 uppercase tracking-wider flex items-center space-x-2">
+                                    <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600"></i>
+                                    <span>Рекомендації щодо захисту:</span>
+                                </h4>
+                                <p class="text-base text-slate-700 leading-relaxed" x-text="selectedOrgan.protection"></p>
+                            </div>
+                        </div>
+
+                        <div x-show="!selectedOrgan" class="py-20 text-center space-y-3">
+                            <i data-lucide="mouse-pointer-click" class="w-12 h-12 text-slate-400 mx-auto animate-bounce"></i>
+                            <p class="text-base text-slate-600">Натисніть на анатомічну систему зліва для детального аналізу.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODULE 2: ECO-DETECTIVE KITCHEN -->
+        <div x-show="activeTab === 'kitchen'" x-cloak class="space-y-6 animate-fade-in">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 flex items-center space-x-3">
+                        <i data-lucide="home" class="w-8 h-8 text-teal-600"></i>
+                        <span>Модуль 2: Еко-детектив у побуті (Віртуальна кухня)</span>
+                    </h2>
+                    <p class="text-sm md:text-base text-slate-600 mt-1">Огляньте предмети побуту, знайдіть приховані джерела токсикантів та дізнайтеся безпечні альтернативи.</p>
+                </div>
+                <div class="flex items-center space-x-2 bg-white border border-slate-200 px-4 py-2.5 rounded-2xl shadow-sm">
+                    <span class="text-sm font-semibold text-slate-700">Знайдено небезпек: <strong class="text-teal-600 font-bold text-base" x-text="foundHazards.length + ' / ' + kitchenHazards.length"></strong></span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Kitchen Items List -->
+                <div class="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-sm">
+                    <h3 class="font-bold text-lg text-slate-900 flex items-center space-x-2">
+                        <i data-lucide="search" class="w-5 h-5 text-teal-600"></i>
+                        <span>Зони інспекції</span>
+                    </h3>
+                    <div class="space-y-3">
+                        <template x-for="item in kitchenHazards" :key="item.id">
+                            <button @click="inspectItem(item)" 
+                                class="w-full text-left p-4 rounded-2xl border font-semibold text-base transition-all flex items-center justify-between"
+                                :class="foundHazards.includes(item.id) ? 'bg-emerald-50 border-emerald-300 text-emerald-900' : (activeKitchenItem?.id === item.id ? 'bg-teal-600 text-white border-teal-600 shadow-md' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100')">
+                                <div class="flex items-center space-x-3">
+                                    <i :data-lucide="item.icon" class="w-6 h-6" :class="foundHazards.includes(item.id) ? 'text-emerald-600' : (activeKitchenItem?.id === item.id ? 'text-white' : 'text-slate-500')"></i>
+                                    <span x-text="item.name"></span>
+                                </div>
+                                <span class="text-xs px-3 py-1 rounded-full font-bold" :class="foundHazards.includes(item.id) ? 'bg-emerald-200 text-emerald-800' : 'bg-slate-200 text-slate-600'" x-text="foundHazards.includes(item.id) ? 'Перевірено' : 'Оглянути'"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Inspection Detail Panel -->
+                <div class="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 lg:p-8 space-y-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between pb-5 border-b border-slate-200">
+                            <h3 class="text-2xl font-extrabold text-slate-900 flex items-center space-x-3">
+                                <i data-lucide="shield-alert" class="w-7 h-7 text-amber-500"></i>
+                                <span x-text="activeKitchenItem ? activeKitchenItem.name : 'Оберіть побутовий об\'єкт зліва'"></span>
+                            </h3>
+                            <span class="text-xs md:text-sm px-3.5 py-1.5 rounded-full font-bold bg-teal-100 text-teal-800">Побутовий контроль</span>
+                        </div>
+
+                        <div x-show="activeKitchenItem" class="mt-6 space-y-6 animate-fade-in">
+                            <div class="p-5 rounded-2xl border" :class="activeKitchenItem.risk ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'">
+                                <div class="flex items-start space-x-4">
+                                    <i :data-lucide="activeKitchenItem.risk ? 'alert-triangle' : 'check-circle-2'" class="w-7 h-7 mt-0.5 flex-shrink-0" :class="activeKitchenItem.risk ? 'text-red-600' : 'text-emerald-600'"></i>
+                                    <div class="space-y-1.5">
+                                        <h4 class="font-extrabold text-lg text-slate-900" x-text="activeKitchenItem.risk ? 'Виявлено небезпеку / ризик!' : 'Об\'єкт безпечний'"></h4>
+                                        <p class="text-base text-slate-700 leading-relaxed" x-text="activeKitchenItem.description"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-2">
+                                <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Безпечна альтернатива та рекомендація:</h4>
+                                <p class="text-base text-slate-700 leading-relaxed" x-text="activeKitchenItem.solution"></p>
+                            </div>
+                        </div>
+
+                        <div x-show="!activeKitchenItem" class="py-20 text-center space-y-3">
+                            <i data-lucide="mouse-pointer-click" class="w-12 h-12 text-slate-400 mx-auto animate-bounce"></i>
+                            <p class="text-base text-slate-600">Натисніть на будь-який об'єкт зліва, щоб провести екологічну експертизу.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODULE 3: WAR IMPACT & REMEDIATION -->
+        <div x-show="activeTab === 'war'" x-cloak class="space-y-6 animate-fade-in">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 flex items-center space-x-3">
+                        <i data-lucide="globe" class="w-8 h-8 text-cyan-600"></i>
+                        <span>Модуль 3: Вплив війни на екологію та відновлення</span>
+                    </h2>
+                    <p class="text-sm md:text-base text-slate-600 mt-1">Досліджуйте, як наслідки військових дій забруднюють ґрунти й воду, та як працює фіторемедіація.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Sources of War Contamination -->
+                <div class="bg-white border border-slate-200 rounded-3xl p-6 lg:p-8 space-y-5 shadow-sm">
+                    <h3 class="font-extrabold text-xl text-slate-900 flex items-center space-x-3">
+                        <i data-lucide="bomb" class="w-6 h-6 text-red-600"></i>
+                        <span>Джерела військового забруднення</span>
+                    </h3>
+                    <div class="space-y-4">
+                        <template x-for="(src, idx) in warSources" :key="idx">
+                            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-2">
+                                <div class="flex items-center space-x-3">
+                                    <span class="w-8 h-8 rounded-xl bg-red-100 text-red-700 font-bold flex items-center justify-center text-sm" x-text="idx + 1"></span>
+                                    <h4 class="font-bold text-lg text-slate-900" x-text="src.title"></h4>
+                                </div>
+                                <p class="text-sm md:text-base text-red-700 font-semibold" x-text="'Елементи: ' + src.elements"></p>
+                                <p class="text-base text-slate-700 leading-relaxed" x-text="src.impact"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Phytoremediation & Recovery -->
+                <div class="bg-white border border-slate-200 rounded-3xl p-6 lg:p-8 space-y-5 shadow-sm flex flex-col justify-between">
+                    <div class="space-y-5">
+                        <h3 class="font-extrabold text-xl text-slate-900 flex items-center space-x-3">
+                            <i data-lucide="sprout" class="w-6 h-6 text-emerald-600"></i>
+                            <span>Шляхи відновлення та фіторемедіація</span>
+                        </h3>
+                        <p class="text-base text-slate-700 leading-relaxed">
+                            Військові дії залишають у землі тонни важких металів та залишків вибухівки. Для очищення земель активно застосовується біологічний метод – <strong class="text-emerald-700">фіторемедіація</strong>.
+                        </p>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 space-y-2">
+                                <h4 class="font-bold text-lg text-emerald-900 flex items-center space-x-2">
+                                    <i data-lucide="flower-2" class="w-6 h-6 text-emerald-600"></i>
+                                    <span>Рослини-санітари (Соняшник, ріпак, конюшина)</span>
+                                </h4>
+                                <p class="text-base text-slate-700 leading-relaxed">
+                                    Ці рослини володіють унікальною здатністю витягувати важкі метали (свинець, кадмій, мідь) із ґрунту через кореневу систему, акумулюючи їх у стеблах і таким чином очищаючи землю для майбутніх поколінь.
+                                </p>
+                            </div>
+
+                            <div class="bg-cyan-50 border border-cyan-200 rounded-2xl p-5 space-y-2">
+                                <h4 class="font-bold text-lg text-cyan-900 flex items-center space-x-2">
+                                    <i data-lucide="shield-check" class="w-6 h-6 text-cyan-600"></i>
+                                    <span>Комплексні заходи відновлення</span>
+                                </h4>
+                                <ul class="list-disc list-inside text-base text-slate-700 space-y-1.5">
+                                    <li>Суворий лабораторний моніторинг ґрунтів і води.</li>
+                                    <li>Розмінування та очищення територій від токсичних відходів.</li>
+                                    <li>Екологічна експертиза перед відновленням сільського господарства.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODULE 4: ENCYCLOPEDIA TABLE -->
+        <div x-show="activeTab === 'encyclopedia'" x-cloak class="space-y-6 animate-fade-in">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 flex items-center space-x-3">
+                        <i data-lucide="book-open" class="w-8 h-8 text-indigo-600"></i>
+                        <span>Модуль 4: Інтерактивний довідник токсикантів</span>
+                    </h2>
+                    <p class="text-sm md:text-base text-slate-600 mt-1">Комплексна характеристика елементів-токсикантів на основі наукових даних: біологічна роль, негативний вплив, джерела та захист.</p>
+                </div>
+                <!-- Search input -->
+                <div class="relative w-full md:w-80">
+                    <i data-lucide="search" class="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" x-model="elementSearch" placeholder="Пошук елемента (напр. Свинець)..." class="w-full bg-white border border-slate-300 rounded-2xl pl-11 pr-4 py-3 text-base text-slate-900 focus:outline-none focus:border-indigo-600 shadow-sm">
+                </div>
+            </div>
+
+            <!-- Elements Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <template x-for="el in filteredElements" :key="el.symbol">
+                    <div class="bg-white border border-slate-200 rounded-3xl p-6 lg:p-8 space-y-4 shadow-sm hover:border-indigo-500 transition-all">
+                        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-700 font-extrabold text-xl flex items-center justify-center shadow-sm" x-text="el.symbol"></span>
+                                <div>
+                                    <h3 class="font-extrabold text-xl text-slate-900" x-text="el.name"></h3>
+                                    <p class="text-xs font-bold text-indigo-600" x-text="'ГДК: ' + el.gdk"></p>
+                                </div>
+                            </div>
+                            <span class="text-xs px-3 py-1.5 rounded-full font-bold" :class="el.dangerLevel === 'Високий' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'" x-text="'Ризик: ' + el.dangerLevel"></span>
+                        </div>
+
+                        <div class="space-y-3 text-sm md:text-base text-slate-700">
+                            <div>
+                                <strong class="text-slate-900 block mb-1">🌿 Біологічна роль і значення:</strong>
+                                <p class="leading-relaxed" x-text="el.role"></p>
+                            </div>
+                            <div>
+                                <strong class="text-slate-900 block mb-1">⚠️ Негативний вплив на організм:</strong>
+                                <p class="leading-relaxed text-red-700" x-text="el.impact"></p>
+                            </div>
+                            <div>
+                                <strong class="text-slate-900 block mb-1">🏭 Джерела забруднення:</strong>
+                                <p class="leading-relaxed" x-text="el.sources"></p>
+                            </div>
+                            <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl">
+                                <strong class="text-emerald-900 block mb-1">🛡️ Шляхи запобігання (Захист):</strong>
+                                <p class="leading-relaxed text-slate-800" x-text="el.prevention"></p>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- MODULE 5: QUIZ & CERTIFICATE -->
+        <div x-show="activeTab === 'quiz'" x-cloak class="space-y-6 animate-fade-in">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 flex items-center space-x-3">
+                        <i data-lucide="award" class="w-8 h-8 text-amber-600"></i>
+                        <span>Модуль 5: Підсумковий тест та Сертифікат Еко-інспектора</span>
+                    </h2>
+                    <p class="text-sm md:text-base text-slate-600 mt-1">Дайте відповідь на запитання на основі дослідження та отримайте іменний сертифікат.</p>
+                </div>
+            </div>
+
+            <!-- Quiz Container -->
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 lg:p-10 max-w-3xl mx-auto space-y-6 shadow-sm">
+                <!-- If Quiz Not Finished -->
+                <template x-if="!quizFinished">
+                    <div class="space-y-6">
+                        <!-- Progress Header -->
+                        <div class="flex items-center justify-between text-sm font-semibold text-slate-500 pb-4 border-b border-slate-100">
+                            <span>Запитання <strong class="text-slate-900" x-text="currentQuestionIdx + 1"></strong> з <strong class="text-slate-900" x-text="quizQuestions.length"></strong></span>
+                            <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-bold" x-text="quizQuestions[currentQuestionIdx].category"></span>
+                        </div>
+
+                        <!-- Question Title -->
+                        <h3 class="text-xl md:text-2xl font-extrabold text-slate-900 leading-snug" x-text="quizQuestions[currentQuestionIdx].question"></h3>
+
+                        <!-- Options -->
+                        <div class="space-y-3.5">
+                            <template x-for="(option, oIdx) in quizQuestions[currentQuestionIdx].options" :key="oIdx">
+                                <button @click="selectQuizOption(oIdx)" 
+                                    class="w-full text-left p-5 rounded-2xl border text-base font-semibold transition-all flex items-center justify-between"
+                                    :class="getOptionClass(oIdx)">
+                                    <div class="flex items-center space-x-4">
+                                        <span class="w-8 h-8 rounded-xl bg-slate-100 border border-slate-300 flex items-center justify-center text-sm text-slate-700 font-bold" x-text="['А', 'Б', 'В', 'Г'][oIdx]"></span>
+                                        <span x-text="option"></span>
+                                    </div>
+                                    <template x-if="quizAnswered">
+                                        <div>
+                                            <i x-show="oIdx === quizQuestions[currentQuestionIdx].correct" data-lucide="check-circle-2" class="w-6 h-6 text-emerald-600"></i>
+                                            <i x-show="selectedQuizOption === oIdx && oIdx !== quizQuestions[currentQuestionIdx].correct" data-lucide="x-circle" class="w-6 h-6 text-red-600"></i>
+                                        </div>
+                                    </template>
+                                </button>
+                            </template>
+                        </div>
+
+                        <!-- Explanation Box -->
+                        <div x-show="quizAnswered" x-cloak class="p-5 rounded-2xl border bg-slate-50 border-slate-200 space-y-2 animate-fade-in">
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">Наукове пояснення:</h4>
+                            <p class="text-base text-slate-700 leading-relaxed" x-text="quizQuestions[currentQuestionIdx].explanation"></p>
+                        </div>
+
+                        <!-- Next Button -->
+                        <div class="flex justify-end pt-4">
+                            <button @click="nextQuizQuestion()" x-show="quizAnswered" class="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base rounded-2xl flex items-center space-x-2 shadow-lg shadow-emerald-600/30 transition-all">
+                                <span x-text="currentQuestionIdx < quizQuestions.length - 1 ? 'Наступне запитання' : 'Переглянути результати'"></span>
+                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Quiz Finished / Certificate Screen -->
+                <template x-if="quizFinished">
+                    <div class="space-y-6 text-center animate-fade-in py-6">
+                        <div class="w-24 h-24 rounded-3xl bg-amber-100 border border-amber-300 text-amber-700 flex items-center justify-center mx-auto shadow-xl">
+                            <i data-lucide="award" class="w-12 h-12"></i>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <h3 class="text-3xl font-extrabold text-slate-900">Вітаємо! Тест успішно пройдено!</h3>
+                            <p class="text-lg text-slate-700">Ваш результат: <strong class="text-emerald-700 font-bold" x-text="quizScore"></strong> з <strong class="text-slate-900" x-text="quizQuestions.length"></strong> правильних відповідей.</p>
+                        </div>
+
+                        <!-- Certificate Input Form -->
+                        <div class="bg-slate-50 border border-slate-200 rounded-3xl p-6 lg:p-8 space-y-4 max-w-md mx-auto text-left shadow-sm">
+                            <label class="block text-sm font-bold text-slate-800">Введіть ваше ПІБ для сертифіката:</label>
+                            <input type="text" x-model="userName" placeholder="напр. Іваненко Олександр" class="w-full bg-white border border-slate-300 rounded-2xl px-4 py-3.5 text-base text-slate-900 focus:outline-none focus:border-emerald-600 shadow-sm">
+                            
+                            <button @click="generateCertificate()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base rounded-2xl flex items-center justify-center space-x-2 shadow-lg shadow-emerald-600/30 transition-all">
+                                <i data-lucide="download" class="w-5 h-5"></i>
+                                <span>Сформувати сертифікат Еко-інспектора</span>
+                            </button>
+                        </div>
+
+                        <button @click="restartQuiz()" class="text-sm font-semibold text-slate-500 hover:text-slate-900 underline">
+                            Пройти тест повторно
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Certificate Modal -->
+    <div x-show="showCertificateModal" x-cloak class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
+        <div @click.outside="showCertificateModal = false" class="bg-white border-2 border-amber-500/50 rounded-3xl max-w-2xl w-full p-8 lg:p-10 space-y-6 text-center relative shadow-2xl">
+            <button @click="showCertificateModal = false" class="absolute top-6 right-6 p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:text-slate-900">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="space-y-3">
+                <div class="w-20 h-20 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                    <i data-lucide="award" class="w-10 h-10"></i>
+                </div>
+                <h3 class="text-xs uppercase tracking-widest text-amber-700 font-extrabold">СЕРТИФІКАТ ЕКО-ІНСПЕКТОРА</h3>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900">Екологічна безпека та здоров'я людини</h2>
+            </div>
+
+            <div class="py-6 border-y border-slate-200 space-y-4">
+                <p class="text-base text-slate-600">Цей сертифікат засвідчує, що</p>
+                <h1 class="text-3xl font-extrabold text-emerald-700 underline decoration-emerald-500/40 underline-offset-8" x-text="userName || 'Шановний Слухач'"></h1>
+                <p class="text-base text-slate-700 leading-relaxed max-w-lg mx-auto pt-2">
+                    успішно завершив(ла) навчальний курс та інтерактивний симулятор за темою <strong class="text-slate-900">«Вплив елементів-токсикантів на здоров'я людини»</strong> і продемонстрував(ла) високий рівень екологічної свідомості.
+                </p>
+            </div>
+
+            <div class="flex items-center justify-between text-sm font-semibold text-slate-600 pt-2">
+                <span>Дата: <strong class="text-slate-900" x-text="currentDate"></strong></span>
+                <span>Статус: <strong class="text-emerald-700">Атестовано</strong></span>
+            </div>
+
+            <div class="flex justify-center space-x-4 pt-4">
+                <button @click="window.print()" class="px-7 py-3.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm rounded-2xl flex items-center space-x-2 shadow-md">
+                    <i data-lucide="printer" class="w-5 h-5"></i>
+                    <span>Друкувати / Зберегти PDF</span>
+                </button>
+                <button @click="showCertificateModal = false" class="px-7 py-3.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm rounded-2xl">
+                    Закрити
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 px-6 text-center text-sm text-slate-600 shadow-sm mt-auto">
+        <p>Інтерактивний навчальний симулятор розроблено на основі наукового дослідження «Вплив елементів-токсикантів на здоров'я людини».</p>
+    </footer>
+
+    <!-- Script Application Logic -->
+    <script>
+        function appState() {
+            return {
+                activeTab: 'home',
+                mobileMenuOpen: false,
+                score: 150,
+                tabs: [
+                    { id: 'home', name: 'Головна', icon: 'home' },
+                    { id: 'body', name: 'Симулятор тіла', icon: 'activity' },
+                    { id: 'kitchen', name: 'Еко-детектив', icon: 'home' },
+                    { id: 'war', name: 'Вплив війни', icon: 'globe' },
+                    { id: 'encyclopedia', name: 'Довідник', icon: 'book-open' },
+                    { id: 'quiz', name: 'Тест', icon: 'award' }
+                ],
+                // Module 1: Body Organs Data
+                selectedOrgan: null,
+                bodyOrgans: [
+                    {
+                        id: 'brain',
+                        name: 'Центральна нервова система та мозг',
+                        icon: 'brain',
+                        elements: ['Pb (Свинець)', 'Hg (Ртуть)', 'Al (Алюміній)', 'Ni (Нікель)', 'Cu (Мідь)'],
+                        pathology: 'Токсиканти порушують роботу нейронів та передачу імпульсів. Викликають тремор, хронічну втому, депресивні стани, погіршення пам\'яті, затримку психічного розвитку у дітей та розумову відсталість (особливо при дії свинцю).',
+                        protection: 'Ретельне очищення питної води, контроль рівня важких металів у повітрі, відмова від шкідливих звичок та якісний відпочинок.'
+                    },
+                    {
+                        id: 'bones',
+                        name: 'Кісткова система та суглоби',
+                        icon: 'bone',
+                        elements: ['Pb (Свинець)', 'Cd (Кадмій)', 'Cs (Цезій-137)'],
+                        pathology: 'Важкі метали здатні заміщувати кальцій у кістковій тканині та роками накопичуватися там. Гостре отруєння кадмієм викликає синдром "Ітай-ітай" із сильними болями в кістках і руйнуванням скелета.',
+                        protection: 'Збалансоване харчування з достатньою кількістю кальцію та вітамінів, вживання контрольованої води, радіологічний контроль.'
+                    },
+                    {
+                        id: 'liver',
+                        name: 'Печінка та травна система',
+                        icon: 'pill',
+                        elements: ['Fe (Ферум)', 'Cu (Мідь)', 'Hg (Ртуть)', 'Pb (Свинець)'],
+                        pathology: 'Печінка діє як головний біологічний фільтр, тому в ній концентруються надлишкові метали. Це викликає шлунково-кишкові розлади, гепатит, дегенеративні зміни та підвищує ризик онкологічних захворювань.',
+                        protection: 'Використання безпечного кухонного посуду (без пошкодженої емалі чи міді без полуди), вживання екологічно чистих харчів.'
+                    },
+                    {
+                        id: 'kidneys',
+                        name: 'Нирки та видільна система',
+                        icon: 'droplets',
+                        elements: ['Hg (Ртуть)', 'Cd (Кадмій)', 'Pb (Свинець)', 'Cr (Хром)'],
+                        pathology: 'Нирки виводять токсичні сполуки, через що самі зазнають руйнівного удару. Розвиваються хронічні запалення, ниркова недостатність та ураження канальців.',
+                        protection: 'Вживання якісної відфільтрованої води, обмеження контакту з промисловими хімікатами, регулярний медичний огляд.'
+                    },
+                    {
+                        id: 'lungs',
+                        name: 'Дихальна система та легені',
+                        icon: 'wind',
+                        elements: ['Ni (Нікель)', 'Hg (Ртуть)', 'Cl (Хлор)', 'Діоксиди'],
+                        pathology: 'Вдихання забрудненого повітря, парів хлору чи металевого пилу подразнює слизові оболонки, викликає бронхіт, пневмонію, респіраторні алергії та зростає ризик раку легень.',
+                        protection: 'Повна відмова від тютюнопаління, використання засобів захисту під час роботи з хімією, зелені насадження довкола будинку.'
+                    }
+                ],
+
+                // Module 2: Kitchen Inspector Data
+                activeKitchenItem: null,
+                foundHazards: [],
+                kitchenHazards: [
+                    {
+                        id: 1,
+                        name: 'Старий металевий водогін',
+                        icon: 'droplets',
+                        risk: true,
+                        description: 'Старі чавунні чи свинцеві труби виділяють у воду частинки іонів металів (залізо, свинець), що отруюють організм.',
+                        solution: 'Встановіть багатоступеневі побутові фільтри для питної води або оновіть комунікації.'
+                    },
+                    {
+                        id: 2,
+                        name: 'Пошкоджена емальована каструля',
+                        icon: 'cooking-pot',
+                        risk: true,
+                        description: 'Сколи на емалі оголюють залізну основу, сприяючи переходу іонів феруму та домішок у приготовану кислу їжу.',
+                        solution: 'Негайно виведіть з експлуатації пошкоджений емальований посуд.'
+                    },
+                    {
+                        id: 3,
+                        name: 'Відкрита консервна бляшанка',
+                        icon: 'package',
+                        risk: true,
+                        description: 'При контакті з повітрям та кислотами консервів припій (що містить свинець) та жерсть мігрують у їжу.',
+                        solution: 'Завжди перекладайте залишки консервів у скляну чи керамічну тару одразу після відкриття.'
+                    },
+                    {
+                        id: 4,
+                        name: 'Мідний чайник без лудіння',
+                        icon: 'coffee',
+                        risk: true,
+                        description: 'Кип\'ятіння води в нелудженому мідному посуді насичує її іонами міді, що у великих дозах токсично для печінки.',
+                        solution: 'Використовуйте посуд із захисним шаром олова (луджений) або з нержавіючої сталі.'
+                    },
+                    {
+                        id: 5,
+                        name: 'Скляні банки та пляшки',
+                        icon: 'box',
+                        risk: false,
+                        description: 'Скло є інертним, абсолютно безпечним матеріалом, який не виділяє жодних токсичних речовин у харчові продукти.',
+                        solution: 'Чудовий вибір! Скло – найкращий і найекологічніший матеріал для побуту.'
+                    }
+                ],
+                inspectItem(item) {
+                    this.activeKitchenItem = item;
+                    if (item.risk && !this.foundHazards.includes(item.id)) {
+                        this.foundHazards.push(item.id);
+                        this.score += 20;
+                    }
+                },
+
+                // Module 3: War Impact Data
+                warSources: [
+                    {
+                        title: 'Боєприпаси та вибухівка',
+                        elements: 'Свинець, мідь, цинк, кадмій, ртуть',
+                        impact: 'Після розривів снарядів важкі метали та залишки вибухових речовин (тротил) осідають у верхньому шарі ґрунту, отруюючи сільськогосподарські угіддя.'
+                    },
+                    {
+                        title: 'Горіння нафтобаз і техніки',
+                        elements: 'Вуглеводні, бензол, формальдегід',
+                        impact: 'Масштабні пожежі викидають у повітря токсичні сполуки й сажу, які з опадами просочуються в землю та водойми регіону.'
+                    },
+                    {
+                        title: 'Зруйновані промислові об\'єкти',
+                        elements: 'Кислоти, нікель, хром, свинець',
+                        impact: 'Руйнування заводів викликає неконтрольований витік агресивних хімікатів, підвищуючи концентрацію токсикантів у воді в 5-10 разів.'
+                    }
+                ],
+
+                // Module 4: Encyclopedia Elements Data
+                elementSearch: '',
+                elements: [
+                    {
+                        symbol: 'Fe',
+                        name: 'Ферум (Залізо)',
+                        dangerLevel: 'Низький',
+                        gdk: '0,3 мг/л',
+                        role: 'Залізо необхідне для кровотворення, утворення гемоглобіну, дихальних ферментів та цитохромів. При нестачі викликає анемію.',
+                        impact: 'Надлишок накопичується у печінці, селезінці та серцевому м’язі. Викликає збої шлунково-кишкового тракту, нервової системи та алергію.',
+                        sources: 'Старі чавунні та сталеві водогони, металевий технічний посуд, пошкоджене емалеве покриття.',
+                        prevention: 'Очищення води фільтрами, відмова від пошкодженого емальованого та чавунного посуду для кислих страв.'
+                    },
+                    {
+                        symbol: 'Pb',
+                        name: 'Плюмбум (Свинець)',
+                        dangerLevel: 'Високий',
+                        gdk: 'Контролюється міжнародними стандартами',
+                        role: 'Застосовується у виробництві автомобільних акумуляторів, екрануванні кабелів та захисті від радіації.',
+                        impact: 'Глобальний токсикант. Накопичується у кістках. Викликає затримку розвитку, розумову відсталість, уражає нервову та кровоносну системи.',
+                        sources: 'Вихлопні гази, спалювання палива, глазурований глиняний посуд, жерстяні консервні бляшанки (припій), старі труби.',
+                        prevention: 'Санітарний контроль води та продуктів, використання посуду за призначенням, заборона зберігати кислі страви у бляшанках.'
+                    },
+                    {
+                        symbol: 'Cr',
+                        name: 'Хром',
+                        dangerLevel: 'Високий',
+                        gdk: 'Cr⁶⁺ 0,05 мг/л',
+                        role: 'Контролює синтез інсуліну, впливає на ріст, тривалість життя та біосинтез хлорофілу в рослинах.',
+                        impact: 'Сполуки Cr⁶⁺ мають виражену канцерогенну, мутагенну та алергенну дію. Накопичуються у мозку та волоссі.',
+                        sources: 'Харчове обладнання, гальванічні цехи виробництва шкіри, лакофарбова і металургійна промисловість.',
+                        prevention: 'Дотримання техніки безпеки на виробництві, заборона зберігати консерви у відкритих бляшанках, контроль харчів.'
+                    },
+                    {
+                        symbol: 'Cu',
+                        name: 'Купрум (Мідь)',
+                        dangerLevel: 'Середній',
+                        gdk: 'Нормовано в харчових продуктах',
+                        role: 'Входить до складу понад 30 білків і ферментів, необхідний для тканинного дихання та кровотворення.',
+                        impact: 'Накопичується у тканинах мозку та печінці. Викликає розлади нервової системи та шлунково-кишкового тракту.',
+                        sources: 'Нелуджений мідний посуд (чайники, варильні котли), пестициди у сільському господарстві.',
+                        prevention: 'Лудіння мідного посуду оловом, дотримання регламенту застосування засобів захисту рослин.'
+                    },
+                    {
+                        symbol: 'Cl',
+                        name: 'Хлор',
+                        dangerLevel: 'Середній',
+                        gdk: 'Нормовано для питної води',
+                        role: 'Кам’яна сіль як основа хлорної сировини. Використовується в невеликих дозах для знезараження.',
+                        impact: 'Подразнює слизові оболонки, викликає захворювання бронхів, знижує апетит, змінює відтінок шкіри.',
+                        sources: 'Хлорування питної води на міських станціях водоочищення.',
+                        prevention: 'Використання побутових фільтрів для очищення води від залишків хлору та мікробів.'
+                    },
+                    {
+                        symbol: 'Ni',
+                        name: 'Нікель',
+                        dangerLevel: 'Високий',
+                        gdk: 'Нормовано у повітрі та воді',
+                        role: 'Входить до складу каталізаторів, сплавів, лужних акумуляторів. Регулює обмін ДНК і жирів.',
+                        impact: 'Викликає алергію, анемію, збудження нервової системи. Хронічна інтоксикація підвищує ризик пухлин і пневмонії.',
+                        sources: 'Спалювання вугілля, нікельований посуд, тютюнопаління, машинобудівні підприємства.',
+                        prevention: 'Санітарний контроль довкілля, дотримання техніки безпеки, повна відмова від куріння.'
+                    },
+                    {
+                        symbol: 'Hg',
+                        name: 'Меркурій (Ртуть)',
+                        dangerLevel: 'Високий',
+                        gdk: 'Суворий міжнародний контроль',
+                        role: 'Застосовується у термометрах, кварцових лампах, барометрах та медичних мазях.',
+                        impact: 'Органічні сполуки (метилртуть) вкрай токсичні. Блокують білкові структури, вражають нервову систему, нирки, печінку.',
+                        sources: 'Розбиті термометри, спалювання пального, електрохімічна промисловість, акумуляція у рибі та молюсках.',
+                        prevention: 'Обережне поводження з термометрами, швидка демеркуризація, очищення промислових стоків.'
+                    },
+                    {
+                        symbol: 'As',
+                        name: 'Арсен (Миш\'як)',
+                        dangerLevel: 'Високий',
+                        gdk: 'Суворі обмеження у харчах',
+                        role: 'Використовується в мікродозах у медицині та боротьбі зі шкідниками (дератизація).',
+                        impact: 'Сильна отрута. Накопичується у печінці, нирках і волоссі. Викликає різку слабкість, падіння тиску, ураження нервів.',
+                        sources: 'Неочищені промислові стоки, отруєне зерно, використання у стоматології.',
+                        prevention: 'Суворий державний санітарний контроль, зберігання небезпечних речовин у недоступних місцях.'
+                    }
+                ],
+                get filteredElements() {
+                    if (!this.elementSearch) return this.elements;
+                    const q = this.elementSearch.toLowerCase();
+                    return this.elements.filter(e => e.name.toLowerCase().includes(q) || e.symbol.toLowerCase().includes(q));
+                },
+
+                // Module 5: Quiz Data
+                currentQuestionIdx: 0,
+                selectedQuizOption: null,
+                quizAnswered: false,
+                quizScore: 0,
+                quizFinished: false,
+                userName: '',
+                showCertificateModal: false,
+                currentDate: new Date().toLocaleDateString('uk-UA'),
+                quizQuestions: [
+                    {
+                        category: 'Елементи-токсиканти',
+                        question: 'Який міжнародний орган спільно з ФАО включає важкі метали до харчового кодексу та контролює їх вміст?',
+                        options: [
+                            'ЮНЕСКО',
+                            'ВООЗ (Всесвітня організація охорони здоров\'я)',
+                            'Міжнародний олімпійський комітет',
+                            'Червоний Хрест'
+                        ],
+                        correct: 1,
+                        explanation: 'Об\'єднана комісія ФАО та ВООЗ здійснює суворий контроль харчового кодексу та гранично допустимих концентрацій.'
+                    },
+                    {
+                        category: 'Біологічна дія',
+                        question: 'Яка специфічна хвороба виникає при гострому отруєнні Кадмієм (Cd) і супроводжується сильними болями в кістках?',
+                        options: [
+                            'Хвороба "Ітай-ітай" ("Ох-ох")',
+                            'Цинга',
+                            'Рахіт',
+                            'Малярія'
+                        ],
+                        correct: 0,
+                        explanation: 'Надлишок кадмію руйнує кісткову тканину, викликаючи важке захворювання "Ітай-ітай".'
+                    },
+                    {
+                        category: 'Вплив війни',
+                        question: 'Яка рослина найчастіше використовується у фіторемедіації для активного витягування важких металів з ґрунту?',
+                        options: [
+                            'Соняшник та ріпак',
+                            'Береза і дуб',
+                            'Пшениця',
+                            'Картопля'
+                        ],
+                        correct: 0,
+                        explanation: 'Соняшник і ріпак здатні ефективно акумулювати важкі метали з ґрунту у своїй біомасі, очищаючи екосистему.'
+                    },
+                    {
+                        category: 'Побутова безпека',
+                        question: 'Чому не можна зберігати залишки консервів у відкритій жерстяній бляшанці?',
+                        options: [
+                            'Тому що продукт швидко замерзає',
+                            'Через ризик міграції свинцю (з припою) та олова у їжу',
+                            'Це псує колір холодильника',
+                            'Жерсть притягує пил'
+                        ],
+                        correct: 1,
+                        explanation: 'Взаємодія з повітрям та кислотами викликає міграцію токсичних сполук металу з бляшанки у продукт.'
+                    }
+                ],
+                selectQuizOption(idx) {
+                    if (this.quizAnswered) return;
+                    this.selectedQuizOption = idx;
+                    this.quizAnswered = true;
+                    if (idx === this.quizQuestions[this.currentQuestionIdx].correct) {
+                        this.quizScore++;
+                        this.score += 30;
+                    }
+                },
+                getOptionClass(idx) {
+                    if (!this.quizAnswered) {
+                        return this.selectedQuizOption === idx ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100';
+                    }
+                    if (idx === this.quizQuestions[this.currentQuestionIdx].correct) {
+                        return 'bg-emerald-100 border-emerald-500 text-emerald-900';
+                    }
+                    if (this.selectedQuizOption === idx) {
+                        return 'bg-red-100 border-red-500 text-red-900';
+                    }
+                    return 'bg-slate-50 border-slate-200 text-slate-400 opacity-50';
+                },
+                nextQuizQuestion() {
+                    if (this.currentQuestionIdx < this.quizQuestions.length - 1) {
+                        this.currentQuestionIdx++;
+                        this.selectedQuizOption = null;
+                        this.quizAnswered = false;
+                    } else {
+                        this.quizFinished = true;
+                    }
+                },
+                restartQuiz() {
+                    this.currentQuestionIdx = 0;
+                    this.selectedQuizOption = null;
+                    this.quizAnswered = false;
+                    this.quizScore = 0;
+                    this.quizFinished = false;
+                },
+                generateCertificate() {
+                    if (!this.userName.trim()) {
+                        alert('Будь ласка, введіть ваше прізвище та ім\'я для сертифіката.');
+                        return;
+                    }
+                    this.showCertificateModal = true;
+                }
+            }
+        }
+
+        // Initialize Lucide icons on load and Alpine updates
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+        document.addEventListener('alpine:updated', () => {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
